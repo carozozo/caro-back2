@@ -1,0 +1,76 @@
+<div id="content">
+  <div id="editMain">
+    <div class="block1" id="editDiv">
+      <div class="block1">
+        <input type="hidden" id="_id">
+        <span id="accountName"></span>
+      </div>
+      <div class="block1">
+        <span id="name"></span>
+      </div>
+      <div class="block1">
+        <span id="role"></span>
+        <span id="disabled"></span>
+      </div>
+    </div>
+    <div class="block1">
+      <span id="submit"></span>
+      <span id="cancel"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const apiUrl = `/main/account`
+    const $self = $(`#content`).content({
+      allAjaxSuc: () => {
+      },
+    })
+    const $editMain = $self.find('#editMain').receptacle()
+    const $e = $editMain.domMap
+
+    const getQuery = () => {
+      return $editMain.getMapVal({
+        accountName: undefined, // 不更新 accountName
+      })
+    }
+    const getAccountById = (_id) => {
+      const url = `${apiUrl}/getOneById`
+      const suc = (res) => {
+        const account = res.account
+        $e._id.val(account._id)
+        $e.accountName.val(account.accountName)
+        $e.name.val(account.name)
+        $e.role.val(account.role)
+        $e.disabled.val(account.disabled)
+      }
+      $self.callAjax({url, suc, getQuery: {_id}})
+    }
+    const updateAccount = () => {
+      const url = `${apiUrl}/updateOneById`
+      const suc = () => {
+        goPreviewPage()
+      }
+      $self.callAjax({url, suc, getQuery})
+    }
+    const goPreviewPage = () => {
+      $.global.loadPrevPage()
+    }
+
+    $e.accountName.input({title: `帳號`}).disabled(true)
+    $e.name.input({title: `姓名`})
+    $e.role.accountRoleOption()
+    $e.disabled.booleanOption({
+      defTitle: '停用',
+      dropDownOpt: {
+        addEmpty: false,
+      },
+    })
+    $e.submit.btn({html: '更新帳號'}).click(updateAccount)
+    $e.cancel.btn({html: '回上頁', type: 'warning'}).click(goPreviewPage)
+
+    const id = $.unit.getUrlParam('id')
+    getAccountById(id)
+  })()
+</script>

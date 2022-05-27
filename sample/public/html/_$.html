@@ -1,0 +1,111 @@
+<div id="content">
+  <div id="searchMain">
+    <div id="noticeArea"></div>
+    <div class="block1">
+      <span id="limit"></span>
+      <span id="dateRange"></span>
+      <span id="submit"></span>
+      <span class="ajEnableBtn" id="downloadCsv"></span>
+    </div>
+  </div>
+
+  <div id="resultMain">
+    <div id="outlineBlock">
+      <div>
+        總資訊: <span auto-set="sample"></span>&nbsp;
+      </div>
+      <div>
+        總資訊2: <span auto-set="sample2"></span>&nbsp;
+      </div>
+    </div>
+    <div id="resultBlock">
+      <div id="pagination"></div>
+      <table id="listTable"></table>
+    </div>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const apiUrl = `/$projectName$/$targetName$`
+    const $self = $(`#content`).content({
+      allAjaxSuc: () => {
+        $s.ajEnableBtnClass.disableChildren({selector: 'button', disabled: false})
+      },
+    })
+    const $searchMain = $self.find('#searchMain').receptacle()
+    const $resultMain = $self.find('#resultMain').receptacle()
+    const $s = $searchMain.domMap
+    const $r = $resultMain.domMap
+
+    const getQuery = () => {
+      return $searchMain.getMapVal({
+        ...$self.contentParam(),
+        createdAt_$start: $s.dateRange.startDateTimeVal(),
+        createdAt_$endEx: $s.dateRange.endDateTimeVal(),
+      })
+    }
+    const getList = () => {
+      const url = `${apiUrl}/getList`
+      const suc = (res) => {
+        const titleMap = res.titleMap
+        const infos = res.infos
+
+        $r.listTable.tableLayout(titleMap).tableList(infos).tableHeaderSorter({
+          keys: [],
+          fn: () => {
+            $self.contentParam({skip: 0, sortKeys: $r.listTable.getSortKey()})
+            getList()
+            $r.pagination.setCurrentPage()
+          },
+          sortKey: $self.contentParam('sortKeys'),
+        }).foldColumn([])
+      }
+      $self.callAjax({url, suc, getQuery}, $r.listTable)
+    }
+    const getCount = () => {
+      const url = `${apiUrl}/getCount`
+      const data = getQuery()
+      const limit = data.limit
+      const suc = (res) => {
+        const count = res.count
+        $r.pagination.pagination({
+          total: count,
+          limit,
+          cb: ({skip}) => {
+            $self.contentParam({skip})
+            getList()
+          },
+        })
+      }
+      $self.callAjax({url, suc, getQuery}, $r.pagination)
+    }
+    const getOutline = () => {
+      const url = `${apiUrl}/getOutline`
+      const suc = (res) => {
+        const outline = res.outline
+        $r.outlineBlock.autoSet(outline)
+      }
+      $self.callAjax({url, suc, getQuery}, $r.outlineBlock)
+    }
+    const search = () => {
+      $self.contentParam({skip: 0, sortKeys: '-createdAt'}, true)
+      getList()
+      getCount()
+      getOutline()
+    }
+
+    $s.limit.limitInput()
+    $s.dateRange.timeRangePickers()
+    $s.submit.btn().click(search)
+    $s.downloadCsv.downloadCsvOption(`${apiUrl}/downloadCsv`, {
+      query: getQuery,
+    })
+
+    $self.fitOut({
+      fnTextOpt: {enterCb: search},
+    })
+
+    $s.noticeArea.noticeArea([])
+  })()
+</script>

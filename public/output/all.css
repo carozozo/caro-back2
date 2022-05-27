@@ -1,0 +1,40 @@
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  background: aliceblue;
+  display: table;
+}
+
+/* 自定義 */
+
+#container {
+  height: 100%;
+  width: 100%;
+}
+
+#pageHeader {
+  padding: 10px;
+  margin-bottom: 10px;
+  min-height: 70px;
+}
+
+#pageContent {
+  position: fixed;
+  overflow: auto;
+  margin-top: 20px;
+  padding-left: 200px;
+  padding-right: 20px;
+  width: 100%;
+  height: 90%;
+}
+
+.block1 {
+  margin-bottom: 10px;
+}
+
+/* 取代 bootstrap */
+
+.custom-file-label::after {
+  content: none !important;
+}

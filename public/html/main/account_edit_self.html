@@ -1,0 +1,62 @@
+<div id="content">
+  <div id="editMain">
+    <div class="block1" id="editDiv">
+      <div class="block1">
+        <input type="hidden" id="_id">
+      </div>
+      <div class="block1">
+        <span id="name"></span>
+      </div>
+      <div class="block1">
+        <span id="pwd"></span>
+      </div>
+      <div class="block1">
+        <span id="checkPwd"></span>
+      </div>
+    </div>
+    <div class="block1">
+      <span id="submit"></span>
+      <span id="cancel"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const apiUrl = `/main/account`
+    const $self = $(`#content`).content({
+      allAjaxSuc: () => {
+      },
+    })
+    const $editMain = $self.find('#editMain').receptacle()
+    const $e = $editMain.domMap
+
+    const getQuery = () => {
+      return $editMain.getMapVal({})
+    }
+    const updateAccount = () => {
+      const url = `${apiUrl}/updateOneById`
+      const suc = (res) => {
+        const account = res.account
+        goPreviewPage()
+        $.global.initOperator(account)
+      }
+      $self.callAjax({url, suc, getQuery})
+    }
+    const goPreviewPage = () => {
+      $.global.loadPrevPage()
+    }
+
+    $e.name.input({title: `姓名`})
+    $e.pwd.input({title: '密碼', type: 'password', placeholder: '修改密碼時才需填寫'})
+    $e.checkPwd.input({title: '確認密碼', type: 'password'})
+    $e.submit.btn().click(updateAccount)
+    $e.cancel.btn({html: '回上頁', type: 'warning'}).click(goPreviewPage)
+
+    const $$accountUser = $.global.getParamVal('$$accountUser')
+    if (!$$accountUser) return goPreviewPage()
+
+    $e._id.val($$accountUser._id)
+    $e.name.val($$accountUser.name)
+  })()
+</script>

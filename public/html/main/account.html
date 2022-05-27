@@ -1,0 +1,151 @@
+<div id="content">
+  <div id="searchMain">
+    <div class="block1">
+      <span id="limit"></span>
+      <span id="role"></span>
+      <span id="disabled"></span>
+    </div>
+    <div class="block1">
+      <span id="dateRange"></span>
+      <span id="multiInput"></span>
+      <span id="submit"></span>
+      <span id="goCreateAccountBtn"></span>
+    </div>
+  </div>
+
+  <div id="resultMain">
+    <div id="resultBlock">
+      <div id="pagination"></div>
+      <table id="listTable"></table>
+    </div>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const apiUrl = `/main/account`
+    const $self = $(`#content`).content({
+      allAjaxSuc: () => {
+      },
+    })
+    const $searchMain = $self.find('#searchMain').receptacle()
+    const $resultMain = $self.find('#resultMain').receptacle()
+    const $s = $searchMain.domMap
+    const $r = $resultMain.domMap
+
+    const getQuery = () => {
+      return $searchMain.getMapVal({
+        ...$self.contentParam(),
+        createdAt_$start: $s.dateRange.startDateTimeVal(),
+        createdAt_$endEx: $s.dateRange.endDateTimeVal(),
+        [$s.multiInput.dropDownVal()]: $s.multiInput.inputVal(),
+      })
+    }
+    const getList = () => {
+      const url = `${apiUrl}/getList`
+      const suc = (res) => {
+        const titleMap = res.titleMap
+        const infos = res.infos
+
+        const operationKey = '_'
+        titleMap['操作'] = operationKey
+
+        $r.listTable.tableLayout(titleMap).tableList(infos, ({val, key, data, $ele}) => {
+          if (key !== operationKey) return val
+          if (['admin'].includes(data.accountName)) return val // 主管理者
+          setEditAccountBtn($ele, data)
+          setResetPwdBtn($ele, data)
+          setDeleteAccountBtn($ele, data)
+        }).tableHeaderSorter({
+          keys: [],
+          fn: () => {
+            $self.contentParam({skip: 0, sortKeys: $r.listTable.getSortKey()})
+            getList()
+            $r.pagination.setCurrentPage()
+          },
+          sortKey: $self.contentParam('sortKeys'),
+        }).foldColumn([])
+      }
+      $self.callAjax({url, suc, getQuery}, $r.listTable)
+    }
+    const getCount = () => {
+      const url = `${apiUrl}/getCount`
+      const data = getQuery()
+      const limit = data.limit
+      const suc = (res) => {
+        const count = res.count
+        $r.pagination.pagination({
+          total: count,
+          limit,
+          cb: ({skip}) => {
+            $self.contentParam({skip})
+            getList()
+          },
+        })
+      }
+      $self.callAjax({url, suc, getQuery}, $r.pagination)
+    }
+    const search = () => {
+      $self.contentParam({skip: 0, sortKeys: '-createdAt'}, true)
+      getList()
+      getCount()
+    }
+    const deleteAccount = (data) => {
+      const url = `${apiUrl}/deleteOneById`
+      const suc = () => {
+        search()
+      }
+      const _id = data._id
+      $self.callAjax({url, suc, getQuery: {_id}}, $r.pagination)
+    }
+    const resetPwd = (data) => {
+      const url = `${apiUrl}/resetPwdById`
+      const suc = (res) => {
+        const account = res.account
+        alert(`帳號: ${data.accountName} 密碼: ${account.pwd}`)
+      }
+      const _id = data._id
+      $self.callAjax({url, suc, getQuery: {_id}}, $r.pagination)
+    }
+    const goCreateAccountPage = () => {
+      $.global.simpleLoadPage('ybt', 'account_create')
+    }
+    const setEditAccountBtn = ($ele, data) => {
+      const $delAccountBtn = $('<span>').btn({html: '更新', type: 'info'}).click(() => {
+        $.global.simpleLoadPage('ybt', 'account_edit', {query: {id: data._id}})
+      })
+      $ele.append($delAccountBtn)
+    }
+    const setResetPwdBtn = ($ele, data) => {
+      const $btn = $('<span>').btn({html: '重置密碼', type: 'warning'}).click(() => {
+        if (confirm(`確定重置 ${data.accountName} 的密碼`)) resetPwd(data)
+      })
+      $ele.append($btn)
+    }
+    const setDeleteAccountBtn = ($ele, data) => {
+      const $btn = $('<span>').btn({html: '刪除', type: 'danger'}).click(() => {
+        if (confirm(`確定刪除 ${data.accountName}`)) {
+          if (confirm(`再次確定刪除 ${data.accountName}`)) deleteAccount(data)
+        }
+      })
+      $ele.append($btn)
+    }
+
+    $s.limit.limitInput()
+    $s.role.accountRoleOption()
+    $s.disabled.booleanOption({defTitle: '停用'})
+    $s.multiInput.variableInput([
+      {html: '帳號', val: 'accountName'},
+      {html: '姓名', val: 'name'},
+    ])
+    $s.dateRange.timeRangePickers()
+    $s.submit.btn().click(search)
+    $s.goCreateAccountBtn.btn({html: '建立帳號', type: 'warning'}).click(goCreateAccountPage)
+
+    $self.fitOut({
+      fnTextOpt: {enterCb: search},
+    })
+
+    search()
+  })()
+</script>

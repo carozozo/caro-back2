@@ -1,0 +1,72 @@
+<div id="content">
+  <div id="editMain">
+    <div class="block1">
+      <span id="accountName"></span>
+    </div>
+    <div class="block1">
+      <span id="name"></span>
+    </div>
+    <div class="block1">
+      <span id="role"></span>
+    </div>
+    <div class="block1">
+      <span id="submit"></span>
+      <span id="cancel"></span>
+    </div>
+  </div>
+  <div id="resultMain">
+    <div id="resultBlock">
+      <table id="resultTable">
+        <tr>
+          <td auto-set="accountName"></td>
+          <td auto-set="pwd"></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const apiUrl = `/main/account`
+    const $self = $(`#content`).content({
+      allAjaxSuc: () => {
+      },
+    })
+    const $editMain = $self.find('#editMain').receptacle()
+    const $resultMain = $self.find('#resultMain').receptacle()
+    const $e = $editMain.domMap
+    const $r = $resultMain.domMap
+
+    const getQuery = () => {
+      return $editMain.getMapVal({})
+    }
+    const createAccount = () => {
+      const url = `${apiUrl}/createOne`
+      const suc = (res) => {
+        const account = res.account
+
+        $e.accountName.val('')
+        $e.name.val('')
+        $e.role.clickItem(1)
+
+        $r.resultBlock.autoSet({
+          accountName: `帳號: ${account.accountName}`,
+          pwd: `密碼: ${account.pwd}`,
+        })
+        $r.resultTable.show()
+      }
+      $r.resultTable.hide()
+      $self.callAjax({url, suc, getQuery}, $r.pagination)
+    }
+    const goAccountPage = () => {
+      $.global.simpleLoadPage('ybt', 'account')
+    }
+
+    $e.accountName.input({title: `帳號:`})
+    $e.name.input({title: `姓名:`})
+    $e.role.accountRoleOption()
+    $e.submit.btn({html: '建立帳號'}).click(createAccount)
+    $e.cancel.btn({html: '回上頁', type: 'warning'}).click(goAccountPage)
+  })()
+</script>

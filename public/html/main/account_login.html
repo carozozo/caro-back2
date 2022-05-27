@@ -1,0 +1,60 @@
+<div id="content">
+  <div id="loginMain">
+    <div class="block1">
+      <span id="mode"></span>
+    </div>
+    <div class="block1 forSignup">
+      <span id="name"></span>
+    </div>
+    <div class="block1">
+      <span id="accountName"></span>
+      <span id="pwd"></span>
+      <span class="forSignup">
+        <span id="checkPwd"></span>
+      </span>
+      <span id="submit"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const apiUrl = `/main/account`
+    const $self = $(`#content`).content({
+      allAjaxSuc: () => {
+      },
+    })
+    const $loginMain = $self.find('#loginMain').receptacle()
+    const $l = $loginMain.domMap
+    const $forSignup = $self.find('.forSignup')
+
+    const getQuery = () => {
+      return $loginMain.getMapVal({})
+    }
+    const loginOrSignup = () => {
+      const url = $l.mode.val() === '登入' ? `${apiUrl}/login` : `${apiUrl}/signup`
+      const suc = (res) => {
+        $.global.initPage(res)
+      }
+      $self.callAjax({url, suc, getQuery})
+    }
+
+    $l.mode.dropDown(['登入', '申請帳號'], {
+      defIndex: 0, selectedCb: () => {
+        const val = $l.mode.val()
+        if (val === '申請帳號') return $forSignup.fadeIn()
+        $forSignup.hide()
+      },
+    })
+    $l.name.input({title: '姓名', placeholder: '請確實填寫'})
+    $l.accountName.input({title: '帳號'})
+    $l.pwd.input({title: '密碼', type: 'password'})
+    $l.checkPwd.input({title: '確認密碼', type: 'password'})
+    $l.submit.btn().click(loginOrSignup)
+    $self.fitOut({
+      fnTextOpt: {enterCb: loginOrSignup},
+    })
+
+    $forSignup.hide()
+  })()
+</script>
